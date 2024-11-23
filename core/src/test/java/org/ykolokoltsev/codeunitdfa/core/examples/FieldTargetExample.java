@@ -1,5 +1,8 @@
 package org.ykolokoltsev.codeunitdfa.core.examples;
 
+import lombok.experimental.FieldNameConstants;
+
+@FieldNameConstants
 public class FieldTargetExample {
 
   private int x;

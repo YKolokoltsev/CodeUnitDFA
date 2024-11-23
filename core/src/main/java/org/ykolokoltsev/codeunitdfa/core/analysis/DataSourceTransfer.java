@@ -2,7 +2,7 @@ package org.ykolokoltsev.codeunitdfa.core.analysis;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.ykolokoltsev.codeunitdfa.core.analysis.OriginTypeValue.OriginTypeEnum;
+import org.ykolokoltsev.codeunitdfa.core.analysis.SourceTypeValue.OriginTypeEnum;
 import org.checkerframework.dataflow.analysis.BackwardTransferFunction;
 import org.checkerframework.dataflow.analysis.ConditionalTransferResult;
 import org.checkerframework.dataflow.analysis.RegularTransferResult;
@@ -17,25 +17,27 @@ import org.checkerframework.dataflow.cfg.node.ReturnNode;
 import org.checkerframework.dataflow.expression.JavaExpression;
 
 @RequiredArgsConstructor
-class DataOriginTransfer extends AbstractNodeVisitor<
-    TransferResult<OriginTypeValue, DataOriginStore>,
-    TransferInput<OriginTypeValue, DataOriginStore>>
-    implements BackwardTransferFunction<OriginTypeValue, DataOriginStore> {
+class DataSourceTransfer extends AbstractNodeVisitor<
+    TransferResult<SourceTypeValue, DataSourceStore>,
+    TransferInput<SourceTypeValue, DataSourceStore>>
+    implements BackwardTransferFunction<SourceTypeValue, DataSourceStore> {
 
   /**
    * The analysis used by this transfer function.
    */
-  private final DataOriginAnalysis analysis;
+  private final JavaFieldAnalysis analysis;
 
   @Override
-  public DataOriginStore initialNormalExitStore(
-      UnderlyingAST underlyingAST, List<ReturnNode> returnNodes) {
-    return new DataOriginStore();
+  public DataSourceStore initialNormalExitStore(
+      UnderlyingAST underlyingAST,
+      List<ReturnNode> returnNodes
+  ) {
+    return new DataSourceStore();
   }
 
   @Override
-  public DataOriginStore initialExceptionalExitStore(UnderlyingAST underlyingAST) {
-    return new DataOriginStore();
+  public DataSourceStore initialExceptionalExitStore(UnderlyingAST underlyingAST) {
+    return new DataSourceStore();
   }
 
   /**
@@ -48,16 +50,17 @@ class DataOriginTransfer extends AbstractNodeVisitor<
    * @return the input information, as a TransferResult
    */
   @Override
-  public TransferResult<OriginTypeValue, DataOriginStore> visitNode(
-      Node n, TransferInput<OriginTypeValue, DataOriginStore> in) {
-
+  public TransferResult<SourceTypeValue, DataSourceStore> visitNode(
+      Node n,
+      TransferInput<SourceTypeValue, DataSourceStore> in
+  ) {
     if (in.containsTwoStores()) {
-      DataOriginStore thenStore = in.getThenStore();
-      DataOriginStore elseStore = in.getElseStore();
+      DataSourceStore thenStore = in.getThenStore();
+      DataSourceStore elseStore = in.getElseStore();
       return new ConditionalTransferResult<>(null, thenStore, elseStore);
 
     } else {
-      DataOriginStore store = in.getRegularStore();
+      DataSourceStore store = in.getRegularStore();
       return new RegularTransferResult<>(null, store);
     }
   }
@@ -71,15 +74,15 @@ class DataOriginTransfer extends AbstractNodeVisitor<
    * @return regular transfer result
    */
   @Override
-  public TransferResult<OriginTypeValue, DataOriginStore> visitAssignment(
+  public TransferResult<SourceTypeValue, DataSourceStore> visitAssignment(
       AssignmentNode n,
-      TransferInput<OriginTypeValue, DataOriginStore> in) {
-
-    DataOriginStore store = in.getRegularStore();
+      TransferInput<SourceTypeValue, DataSourceStore> in
+  ) {
+    DataSourceStore store = in.getRegularStore();
     Node target = n.getTarget();
 
     if (store.isPresentInDependencyChain(target)
-        || analysis.isTargetExpression(target)) {
+        || analysis.isTargetNode(target)) {
       store.addDependency(n.getTarget(), n.getExpression());
     }
 
@@ -94,10 +97,10 @@ class DataOriginTransfer extends AbstractNodeVisitor<
    * @return regular transfer result
    */
   @Override
-  public TransferResult<OriginTypeValue, DataOriginStore> visitLocalVariable(
+  public TransferResult<SourceTypeValue, DataSourceStore> visitLocalVariable(
       LocalVariableNode n,
-      TransferInput<OriginTypeValue, DataOriginStore> in) {
-    DataOriginStore store = in.getRegularStore();
+      TransferInput<SourceTypeValue, DataSourceStore> in) {
+    DataSourceStore store = in.getRegularStore();
 
     store.updateExpressionType(JavaExpression.fromNode(n), n.getInSource() ?
         OriginTypeEnum.INPUT : OriginTypeEnum.LOCAL);

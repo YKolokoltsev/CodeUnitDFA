@@ -7,7 +7,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
-import org.ykolokoltsev.codeunitdfa.core.analysis.OriginTypeValue.OriginTypeEnum;
+import org.ykolokoltsev.codeunitdfa.core.analysis.SourceTypeValue.OriginTypeEnum;
 import org.apache.commons.lang3.StringUtils;
 import org.checkerframework.dataflow.analysis.Store;
 import org.checkerframework.dataflow.cfg.node.BinaryOperationNode;
@@ -15,15 +15,15 @@ import org.checkerframework.dataflow.cfg.node.Node;
 import org.checkerframework.dataflow.cfg.visualize.CFGVisualizer;
 import org.checkerframework.dataflow.expression.JavaExpression;
 
-public class DataOriginStore implements Store<DataOriginStore> {
+@Getter
+public class DataSourceStore implements Store<DataSourceStore> {
 
   /**
    * Map of all JavaExpressions found in the code unit so far, marked
    * accordingly to the fact if they participate in formation of the
    * target value.
    */
-  @Getter
-  private final Map<JavaExpression, OriginTypeValue> markedExpressions = new HashMap<>();
+  private final Map<JavaExpression, SourceTypeValue> markedExpressions = new HashMap<>();
 
   // TODO: Maybe better to work with JavaExpression here
   public boolean isPresentInDependencyChain(Node expression) {
@@ -49,28 +49,28 @@ public class DataOriginStore implements Store<DataOriginStore> {
     if (source instanceof BinaryOperationNode) {
       extractOperandTree((BinaryOperationNode) source)
           .forEach(op -> markedExpressions.put(JavaExpression.fromNode(op),
-              new OriginTypeValue(OriginTypeEnum.UNKNOWN)));
+              new SourceTypeValue(OriginTypeEnum.UNKNOWN)));
     } else {
       markedExpressions.put(JavaExpression.fromNode(source),
-          new OriginTypeValue(OriginTypeEnum.UNKNOWN));
+          new SourceTypeValue(OriginTypeEnum.UNKNOWN));
     }
   }
 
   @Override
-  public DataOriginStore copy() {
-    DataOriginStore copy = new DataOriginStore();
+  public DataSourceStore copy() {
+    DataSourceStore copy = new DataSourceStore();
     copy.markedExpressions.putAll(markedExpressions);
     return copy;
   }
 
   @Override
-  public DataOriginStore leastUpperBound(DataOriginStore other) {
-    DataOriginStore lubStore = new DataOriginStore();
+  public DataSourceStore leastUpperBound(DataSourceStore other) {
+    DataSourceStore lubStore = new DataSourceStore();
     lubStore.markedExpressions.putAll(markedExpressions);
 
     other.markedExpressions.forEach((key, value) -> {
       if (markedExpressions.containsKey(key)) {
-        OriginTypeValue currValue = markedExpressions.get(key);
+        SourceTypeValue currValue = markedExpressions.get(key);
         lubStore.markedExpressions.put(key, currValue.leastUpperBound(value));
 
       } else {
@@ -81,7 +81,7 @@ public class DataOriginStore implements Store<DataOriginStore> {
   }
 
   @Override
-  public DataOriginStore widenedUpperBound(DataOriginStore previous) {
+  public DataSourceStore widenedUpperBound(DataSourceStore previous) {
     throw new UnsupportedOperationException("widenedUpperBound is not implemented");
   }
 
@@ -91,9 +91,7 @@ public class DataOriginStore implements Store<DataOriginStore> {
   }
 
   @Override
-  public String visualize(CFGVisualizer<?, DataOriginStore, ?> viz) {
-    String key = "Discovered sources: ";
-
+  public String visualize(CFGVisualizer<?, DataSourceStore, ?> viz) {
     String originExpressions = markedExpressions.entrySet().stream()
         .map(e -> String.format("\n{%s: %s}",
             e.getKey().toString(), e.getValue().getType().name()))
@@ -102,7 +100,7 @@ public class DataOriginStore implements Store<DataOriginStore> {
     if (StringUtils.isBlank(originExpressions)) {
       originExpressions = "none";
     }
-    return viz.visualizeStoreKeyVal(key, originExpressions);
+    return viz.visualizeStoreKeyVal("Discovered sources: ", originExpressions);
   }
 
   private Set<Node> extractOperandTree(BinaryOperationNode binaryOperationNode) {

@@ -6,7 +6,7 @@ import lombok.Setter;
 import org.checkerframework.dataflow.analysis.AbstractValue;
 
 @AllArgsConstructor
-public class OriginTypeValue implements AbstractValue<OriginTypeValue> {
+public class SourceTypeValue implements AbstractValue<SourceTypeValue> {
 
   /**
    * TODO: add distinct origin types, e.g. LOCAL, CONSTANT, PARAMETER, etc.
@@ -24,13 +24,12 @@ public class OriginTypeValue implements AbstractValue<OriginTypeValue> {
    * @return new initialized OriginMarkValue
    */
   @Override
-  public OriginTypeValue leastUpperBound(OriginTypeValue other) {
-
+  public SourceTypeValue leastUpperBound(SourceTypeValue other) {
     if (type != other.type) {
       throw new RuntimeException("inconsistent value types");
     }
 
-    return new OriginTypeValue(type);
+    return new SourceTypeValue(type);
   }
 
   public enum OriginTypeEnum {

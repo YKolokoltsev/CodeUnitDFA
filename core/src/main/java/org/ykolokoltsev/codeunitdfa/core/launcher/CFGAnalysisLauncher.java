@@ -1,5 +1,6 @@
 package org.ykolokoltsev.codeunitdfa.core.launcher;
 
+import com.tngtech.archunit.core.domain.JavaMethod;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -7,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -14,8 +16,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector;
-import javax.tools.JavaCompiler;
 import javax.tools.JavaCompiler.CompilationTask;
+import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
@@ -25,12 +27,11 @@ import org.checkerframework.dataflow.analysis.AbstractValue;
 import org.checkerframework.dataflow.analysis.Analysis;
 import org.checkerframework.dataflow.analysis.Store;
 import org.checkerframework.dataflow.analysis.TransferFunction;
-import org.checkerframework.dataflow.cfg.CFGProcessor;
 import org.checkerframework.dataflow.cfg.CFGProcessor.CFGProcessResult;
+import org.checkerframework.dataflow.cfg.CFGProcessor;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
 import org.checkerframework.dataflow.cfg.visualize.CFGVisualizer;
 import org.checkerframework.dataflow.cfg.visualize.DOTCFGVisualizer;
-import org.checkerframework.org.plumelib.util.ArrayMap;
 
 @Slf4j
 public class CFGAnalysisLauncher {
@@ -92,7 +93,7 @@ public class CFGAnalysisLauncher {
   public
   <V extends AbstractValue<V>, S extends Store<S>, T extends TransferFunction<V, S>>
   void saveAnalysisToDot(ControlFlowGraph cfg, Analysis<V, S, T> analysis, boolean verbose) {
-    final Map<String, Object> args = new ArrayMap<>(2);
+    final Map<String, Object> args = new LinkedHashMap<>(2);
     args.put("outdir", targetDir.getPath());
     args.put("verbose", verbose);
 
@@ -103,7 +104,9 @@ public class CFGAnalysisLauncher {
   }
 
   @SneakyThrows
-  public ControlFlowGraph buildCfg(Class<?> targetClass, String methodName) {
+  public ControlFlowGraph buildCfg(JavaMethod javaMethod) {
+    final Class<?> targetClass = Class.forName(javaMethod.getOwner().getName());
+    final String methodName = javaMethod.getName();
     
     // find and setup sources to be compiled 
     final File srcFile = findSourceFile(targetClass);
