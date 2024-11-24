@@ -19,39 +19,55 @@ import org.checkerframework.dataflow.expression.JavaExpression;
 public class DataSourceStore implements Store<DataSourceStore> {
 
   /**
-   * Map of all JavaExpressions found in the code unit so far, marked
-   * accordingly to the fact if they participate in formation of the
-   * target value.
+   * Nodes that participate in formation of the target value.
    */
-  private final Map<JavaExpression, SourceTypeValue> markedExpressions = new HashMap<>();
+  private final Map<JavaExpression, SourceTypeValue> informationSources = new HashMap<>();
 
-  // TODO: Maybe better to work with JavaExpression here
-  public boolean isPresentInDependencyChain(Node expression) {
-    return markedExpressions.containsKey(JavaExpression.fromNode(expression));
+  /**
+   * Checks if a given node is already present in the {@link #informationSources} collection.
+   */
+  public boolean isPresent(Node node) {
+    return informationSources.containsKey(JavaExpression.fromNode(node));
   }
 
   /**
-   * When we get to expression definition during backward analysis,
-   * it becomes available the data about its abstract type. Here
-   * it is possible to update this type.
-   *
-   * @param jx - java expression object
-   * @param type - new type
+   * Returns expression with the given name, and throws in case if element is not present.
    */
-  public void updateExpressionType(JavaExpression jx, SourceTypeEnum type) {
-    Optional.ofNullable(markedExpressions.get(jx))
-        .ifPresent(v -> v.setType(type));
+  public JavaExpression getByNodeName(
+      final Node node
+  ) {
+    return informationSources.keySet().stream()
+        .filter(k -> k.toString().equals(node.toString()))
+        .collect(CollectionUtils.toSingleton());
+  }
+
+  /**
+   * Returns expression with the given name or empty if not found.
+   */
+  public Optional<JavaExpression> findByName(
+      final Node node
+  ) {
+    final JavaExpression expression = informationSources.keySet().stream()
+        .filter(k -> k.toString().equals(node.toString()))
+        .collect(CollectionUtils.toSingletonFallback(null));
+    return Optional.ofNullable(expression);
+  }
+
+  /**
+   * Updates type of existing expression.
+   */
+  public void updateSourceType(final JavaExpression expression, SourceTypeEnum type) {
+    informationSources.get(expression).setType(type);
   }
 
   public void addDependency(Node target, Node source) {
-
     // binary operations may be nested
     if (source instanceof BinaryOperationNode) {
       extractOperandTree((BinaryOperationNode) source)
-          .forEach(op -> markedExpressions.put(JavaExpression.fromNode(op),
+          .forEach(op -> informationSources.put(JavaExpression.fromNode(op),
               new SourceTypeValue(SourceTypeEnum.UNKNOWN)));
     } else {
-      markedExpressions.put(JavaExpression.fromNode(source),
+      informationSources.put(JavaExpression.fromNode(source),
           new SourceTypeValue(SourceTypeEnum.UNKNOWN));
     }
   }
@@ -59,22 +75,22 @@ public class DataSourceStore implements Store<DataSourceStore> {
   @Override
   public DataSourceStore copy() {
     DataSourceStore copy = new DataSourceStore();
-    copy.markedExpressions.putAll(markedExpressions);
+    copy.informationSources.putAll(informationSources);
     return copy;
   }
 
   @Override
   public DataSourceStore leastUpperBound(DataSourceStore other) {
     DataSourceStore lubStore = new DataSourceStore();
-    lubStore.markedExpressions.putAll(markedExpressions);
+    lubStore.informationSources.putAll(informationSources);
 
-    other.markedExpressions.forEach((key, value) -> {
-      if (markedExpressions.containsKey(key)) {
-        SourceTypeValue currValue = markedExpressions.get(key);
-        lubStore.markedExpressions.put(key, currValue.leastUpperBound(value));
+    other.informationSources.forEach((key, value) -> {
+      if (informationSources.containsKey(key)) {
+        SourceTypeValue currValue = informationSources.get(key);
+        lubStore.informationSources.put(key, currValue.leastUpperBound(value));
 
       } else {
-        lubStore.markedExpressions.put(key, value);
+        lubStore.informationSources.put(key, value);
       }
     });
     return lubStore;
@@ -92,7 +108,7 @@ public class DataSourceStore implements Store<DataSourceStore> {
 
   @Override
   public String visualize(CFGVisualizer<?, DataSourceStore, ?> viz) {
-    String originExpressions = markedExpressions.entrySet().stream()
+    String originExpressions = informationSources.entrySet().stream()
         .map(e -> String.format("\n{%s: %s}",
             e.getKey().toString(), e.getValue().getType().name()))
         .collect( Collectors.joining( "," ));

@@ -6,30 +6,37 @@ import com.tngtech.archunit.core.domain.JavaParameter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import javax.lang.model.element.Name;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
 import org.checkerframework.dataflow.cfg.UnderlyingAST.CFGMethod;
 import org.checkerframework.dataflow.expression.JavaExpression;
 import org.checkerframework.dataflow.expression.LocalVariable;
 import org.ykolokoltsev.codeunitdfa.core.analysis.SourceTypeValue;
-import org.ykolokoltsev.codeunitdfa.core.analysis.SourceTypeValue.SourceTypeEnum;
 import org.ykolokoltsev.codeunitdfa.core.exception.UnsupportedSourceTypeException;
 
-public class SourceDataNodeMapper {
+public class SourceDataNodeBuilder {
 
+  // DataFlow model
+  private final ControlFlowGraph cfg;
+
+  // ArchUnit model
   private final JavaCodeUnit codeUnit;
-  private final Map<Name, JavaParameter> astToArchUnitParamMap = new HashMap<>();
 
-  public SourceDataNodeMapper(
+  // Internal (mixed) data
+  private final Map<Name, JavaParameter> parameterMap = new HashMap<>();
+
+  public SourceDataNodeBuilder(
       final ControlFlowGraph cfg,
       final JavaCodeUnit codeUnit
   ) {
+    this.cfg = cfg;
     this.codeUnit = codeUnit;
     if (cfg.getUnderlyingAST() instanceof CFGMethod) {
       final List<? extends VariableTree> parameters =
           ((CFGMethod) cfg.getUnderlyingAST()).getMethod().getParameters();
       for (int i = 0; i < parameters.size(); i++) {
-        this.astToArchUnitParamMap.put(parameters.get(i).getName(), codeUnit.getParameters().get(i));
+        this.parameterMap.put(parameters.get(i).getName(), codeUnit.getParameters().get(i));
       }
     }
   }
@@ -43,11 +50,7 @@ public class SourceDataNodeMapper {
       SourceTypeValue value
   ) {
     switch (value.getType()) {
-      case FIELD:
-        return fromField(javaExpression);
-      case CONSTANT:
-        return fromConstant(javaExpression);
-      case PARAMETER:
+      case LOCAL:
         return fromParameter(javaExpression);
       default:
         throw new UnsupportedSourceTypeException();
@@ -70,23 +73,22 @@ public class SourceDataNodeMapper {
   private JavaMemberSourceDataNodeImpl fromConstant(
       JavaExpression javaExpression
   ) {
-    return JavaMemberSourceDataNodeImpl.builder()
-        .expressionOwner(codeUnit)
-        .expression(javaExpression)
-        .sourceType(SourceTypeEnum.CONSTANT)
-        .build();
+    //TODO: Implement.
+    return null;
   }
 
   /**
-   * Find code unit {@link JavaParameter} (ArchUnit) for the {@link LocalVariable} (DFA) defined at
-   * method argument list.
+   * Find {@link JavaParameter} node in the ArchUnit model having the same name as
+   * {@link LocalVariable} from the DFA result.
    */
   private JavaParameterSourceDataNodeImpl fromParameter(
       JavaExpression javaExpression
   ) {
+    assert javaExpression instanceof LocalVariable;
     final Name parameterName = ((LocalVariable) javaExpression).getElement().getSimpleName();
+    final JavaParameter javaParameter = Optional.ofNullable(parameterMap.get(parameterName)).orElseThrow();
     return JavaParameterSourceDataNodeImpl.builder()
-        .parameter(astToArchUnitParamMap.get(parameterName))
+        .parameter(javaParameter)
         .expression(javaExpression)
         .build();
   }

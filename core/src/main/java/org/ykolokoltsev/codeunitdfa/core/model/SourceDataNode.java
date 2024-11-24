@@ -18,4 +18,9 @@ public abstract class SourceDataNode {
    * Unified name of the ArchUnit object wrapping data source.
    */
   public abstract String getUnitName();
+
+  /**
+   * Type of the ArchUnit object that owns a dependency unit.
+   */
+  public abstract String getOwnerTypeName();
 }

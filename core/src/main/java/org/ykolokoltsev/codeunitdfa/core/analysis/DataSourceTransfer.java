@@ -2,6 +2,8 @@ package org.ykolokoltsev.codeunitdfa.core.analysis;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.checkerframework.dataflow.cfg.node.VariableDeclarationNode;
+import org.checkerframework.dataflow.expression.JavaExpression;
 import org.ykolokoltsev.codeunitdfa.core.analysis.SourceTypeValue.SourceTypeEnum;
 import org.checkerframework.dataflow.analysis.BackwardTransferFunction;
 import org.checkerframework.dataflow.analysis.ConditionalTransferResult;
@@ -14,7 +16,6 @@ import org.checkerframework.dataflow.cfg.node.AssignmentNode;
 import org.checkerframework.dataflow.cfg.node.LocalVariableNode;
 import org.checkerframework.dataflow.cfg.node.Node;
 import org.checkerframework.dataflow.cfg.node.ReturnNode;
-import org.checkerframework.dataflow.expression.JavaExpression;
 
 @RequiredArgsConstructor
 class DataSourceTransfer extends AbstractNodeVisitor<
@@ -27,40 +28,43 @@ class DataSourceTransfer extends AbstractNodeVisitor<
    */
   private final JavaFieldAnalysis analysis;
 
+  /**
+   * Returns the initial store that should be used at the normal exit block.
+   */
   @Override
   public DataSourceStore initialNormalExitStore(
-      UnderlyingAST underlyingAST,
-      List<ReturnNode> returnNodes
+      final UnderlyingAST underlyingAST,
+      final List<ReturnNode> returnNodes
   ) {
     return new DataSourceStore();
   }
 
+  /**
+   * Returns the initial store that should be used at the exceptional exit block or given the underlying AST of
+   * a control flow graph.
+   */
   @Override
-  public DataSourceStore initialExceptionalExitStore(UnderlyingAST underlyingAST) {
+  public DataSourceStore initialExceptionalExitStore(
+      final UnderlyingAST underlyingAST
+  ) {
     return new DataSourceStore();
   }
 
   /**
    * A default node visiting method implementation used by AbstractNodeVisitor.
-   *
-   * <p>This default implementation returns the input information unchanged, or in the case of
-   * conditional input information, merged.
-   *
-   * @param in the transfer input
-   * @return the input information, as a TransferResult
    */
   @Override
   public TransferResult<SourceTypeValue, DataSourceStore> visitNode(
-      Node n,
-      TransferInput<SourceTypeValue, DataSourceStore> in
+      final Node n,
+      final TransferInput<SourceTypeValue, DataSourceStore> in
   ) {
     if (in.containsTwoStores()) {
-      DataSourceStore thenStore = in.getThenStore();
-      DataSourceStore elseStore = in.getElseStore();
+      final DataSourceStore thenStore = in.getThenStore();
+      final DataSourceStore elseStore = in.getElseStore();
       return new ConditionalTransferResult<>(null, thenStore, elseStore);
 
     } else {
-      DataSourceStore store = in.getRegularStore();
+      final DataSourceStore store = in.getRegularStore();
       return new RegularTransferResult<>(null, store);
     }
   }
@@ -68,20 +72,16 @@ class DataSourceTransfer extends AbstractNodeVisitor<
   /**
    * Checks the left hand of the assignment operation if it may affect
    * value of the analysis target, and updates store.
-   *
-   * @param n object of AssignmentNode
-   * @param in transfer input
-   * @return regular transfer result
    */
   @Override
   public TransferResult<SourceTypeValue, DataSourceStore> visitAssignment(
-      AssignmentNode n,
-      TransferInput<SourceTypeValue, DataSourceStore> in
+      final AssignmentNode n,
+      final TransferInput<SourceTypeValue, DataSourceStore> in
   ) {
-    DataSourceStore store = in.getRegularStore();
-    Node target = n.getTarget();
+    final DataSourceStore store = in.getRegularStore();
+    final Node target = n.getTarget();
 
-    if (store.isPresentInDependencyChain(target)
+    if (store.isPresent(target)
         || analysis.isTargetNode(target)) {
       store.addDependency(n.getTarget(), n.getExpression());
     }
@@ -90,21 +90,27 @@ class DataSourceTransfer extends AbstractNodeVisitor<
   }
 
   /**
-   * Update OriginTypeValue for local variables to INPUT or LOCAL.
-   *
-   * @param n object of LocalVariableNode
-   * @param in transfer input
-   * @return regular transfer result
+   * Updates {@link JavaExpression} type to {@link SourceTypeEnum#LOCAL}.
    */
   @Override
   public TransferResult<SourceTypeValue, DataSourceStore> visitLocalVariable(
-      LocalVariableNode n,
-      TransferInput<SourceTypeValue, DataSourceStore> in) {
-    DataSourceStore store = in.getRegularStore();
+      final LocalVariableNode n,
+      final TransferInput<SourceTypeValue, DataSourceStore> in) {
+    final DataSourceStore store = in.getRegularStore();
+    store.findByName(n).ifPresent(e -> store.updateSourceType(e, SourceTypeEnum.LOCAL));
+    return new RegularTransferResult<>(null, store);
+  }
 
-    store.updateExpressionType(JavaExpression.fromNode(n), n.getInSource() ?
-        SourceTypeEnum.PARAMETER : SourceTypeEnum.LOCAL);
-
+  /**
+   * Updates {@link JavaExpression} type to {@link SourceTypeEnum#DECLARED}.
+   */
+  @Override
+  public TransferResult<SourceTypeValue, DataSourceStore> visitVariableDeclaration(
+      final VariableDeclarationNode n,
+      final TransferInput<SourceTypeValue, DataSourceStore> in) {
+    final DataSourceStore store = in.getRegularStore();
+    final JavaExpression e = store.getByNodeName(n);
+    store.updateSourceType(e, SourceTypeEnum.DECLARED);
     return new RegularTransferResult<>(null, store);
   }
 }

@@ -1,62 +1,62 @@
 package org.ykolokoltsev.codeunitdfa.core.analysis;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.RequiredArgsConstructor;
 import org.checkerframework.dataflow.analysis.AbstractValue;
 
+@Data
 @AllArgsConstructor
 public class SourceTypeValue implements AbstractValue<SourceTypeValue> {
 
-  /**
-   * TODO: add distinct origin types, e.g. LOCAL, CONSTANT, PARAMETER, etc.
-   */
-  @Getter
-  @Setter
   private SourceTypeEnum type;
 
+  // TODO: Test for real expressions (where this method is used).
   /**
-   * When joining two origin marks for the same JavaExpression node from
-   * two alternative flows, the origin mark is true in case if any flow
-   * affects target.
-   * <p/>
-   * @param other mark for the same JavaExpression from another flow
-   * @return new initialized OriginMarkValue
+   * Selects a more specific {@link SourceTypeEnum} value.
    */
   @Override
   public SourceTypeValue leastUpperBound(SourceTypeValue other) {
-    if (type != other.type) {
-      throw new RuntimeException("inconsistent value types");
+    if (type != other.type
+        && type.getPriority() == other.type.getPriority()
+        && getType() != SourceTypeEnum.UNKNOWN) {
+      throw new RuntimeException(String.format("incomparable types: %s, %s", type, other.type));
     }
 
-    return new SourceTypeValue(type);
+    if (type.getPriority() > other.type.getPriority()) {
+      return new SourceTypeValue(type);
+    }
+    return new SourceTypeValue(other.type);
   }
 
+  @Getter
+  @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
   public enum SourceTypeEnum {
     /**
-     * When this AbstractValue is used for backward analysis,
-     * source expression type may be unknown before reaching its
-     * declaration.
+     * In backwards analysis expression type is unknown before its declaration.
      */
-    UNKNOWN,
+    UNKNOWN(0),
 
     /**
-     * Local variable, declared within code unit. May be present only as a
-     * transitive dependency and should never appear in the resulting DataSourceStore.
+     * Given expression is a local variable, that may be a method input parameter.
      */
-    LOCAL,
+    LOCAL(1),
 
     /**
-     * An input parameter of a method or constructor.
+     * A local variable declared within on of the code blocks.
      */
-    PARAMETER,
+    DECLARED(2),
 
     /**
      * Field of the code unit owner class or any other object.
      */
-    FIELD,
-    CONSTANT,
-    EXTERNAL_FUNCTION_CALL,
-    IMPLICIT_MODIFICATION
+    // TODO: use or delete these types.
+    CONSTANT(2),
+    EXTERNAL_FUNCTION_CALL(2),
+    IMPLICIT_MODIFICATION(2);
+
+    private final int priority;
   }
 }

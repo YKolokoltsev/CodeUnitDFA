@@ -20,11 +20,12 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.ykolokoltsev.codeunitdfa.core.analysis.DataSourceStore;
 import org.ykolokoltsev.codeunitdfa.core.analysis.JavaFieldAnalysis;
 import org.ykolokoltsev.codeunitdfa.core.examples.JavaFieldParameterSource;
+import org.ykolokoltsev.codeunitdfa.core.examples.JavaFieldTransitive;
 import org.ykolokoltsev.codeunitdfa.core.helpers.CFGAnalysisLauncher;
 import org.ykolokoltsev.codeunitdfa.core.model.CodeUnitAnalysisInterpreter;
 import org.ykolokoltsev.codeunitdfa.core.model.SourceDataNode;
 
-public class JavaFieldAnalysisParameterSourceTest {
+public class JavaFieldAnalysisTransitiveTest {
 
   private static JavaClass exampleClass;
   private static CFGAnalysisLauncher launcher;
@@ -35,14 +36,14 @@ public class JavaFieldAnalysisParameterSourceTest {
     final JavaClasses classes = new ClassFileImporter()
         .withImportOption(new OnlyIncludeTests())
         .importPackages(JavaFieldParameterSource.class.getPackageName());
-    exampleClass = classes.get(JavaFieldParameterSource.class);
+    exampleClass = classes.get(JavaFieldTransitive.class);
     launcher = new CFGAnalysisLauncher();
     interpreter = new CodeUnitAnalysisInterpreter();
   }
 
   @ParameterizedTest(name = "{0}")
-  @MethodSource("javaFieldParameterSource_data")
-  void javaFieldParameterSource_methods_works(
+  @MethodSource("javaFieldTransitive_data")
+  void javaFieldTransitive_methods_works(
       final String methodName,
       final Class<?>[] methodParams,
       final List<String> expectedSourceExpressions,
@@ -69,28 +70,24 @@ public class JavaFieldAnalysisParameterSourceTest {
     ModelAsserts.assertSourceDataNodes(sourceDataNodes, expectedSourceDataNodes);
   }
 
-  private static Stream<Arguments> javaFieldParameterSource_data() {
+  private static Stream<Arguments> javaFieldTransitive_data() {
     return Stream.of(
         arguments(
-            "setToParam",
+            "setToParamViaOneLocal",
             new Class<?>[] {int.class},
-            List.of("{a, LOCAL}"),
+            List.of("{a, LOCAL}", "{b, DECLARED}"),
             List.of("{a, JavaParameter}")),
         arguments(
-            "setToSameNameParam",
+            "setToParamViaTwoLocals",
             new Class<?>[] {int.class},
-            List.of("{x, LOCAL}"),
-            List.of("{x, JavaParameter}")),
-        arguments(
-            "setToSecondParam",
-            new Class<?>[] {int.class, int.class},
-            List.of("{b, LOCAL}"),
-            List.of("{b, JavaParameter}")),
-        arguments(
-            "setToBothParams",
+            List.of("{a, LOCAL}", "{b, DECLARED}", "{c, DECLARED}"),
+            List.of("{a, JavaParameter}"))
+        // TODO: Add support for more complex transitivity cases!
+        /*arguments(
+            "setToSecondParamViaFirst",
             new Class<?>[] {int.class, int.class},
             List.of("{a, LOCAL}", "{b, LOCAL}"),
-            List.of("{a, JavaParameter}", "{b, JavaParameter}"))
+            List.of("{b, JavaParameter}"))*/
     );
   }
 

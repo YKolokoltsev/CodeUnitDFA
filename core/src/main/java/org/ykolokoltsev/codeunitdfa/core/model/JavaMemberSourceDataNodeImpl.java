@@ -8,7 +8,7 @@ import org.ykolokoltsev.codeunitdfa.core.analysis.SourceTypeValue.SourceTypeEnum
 
 @Getter
 public class JavaMemberSourceDataNodeImpl extends SourceDataNode {
-  // ArchUnit model node
+
   private final JavaMember expressionOwner;
 
   @Builder
@@ -23,6 +23,11 @@ public class JavaMemberSourceDataNodeImpl extends SourceDataNode {
 
   @Override
   public String getUnitName() {
-    return expressionOwner.getName();
+    return expression.toString();
+  }
+
+  @Override
+  public String getOwnerTypeName() {
+    return expressionOwner.getClass().getSimpleName();
   }
 }

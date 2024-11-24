@@ -1,7 +1,6 @@
-package org.ykolokoltsev.codeunitdfa.core.launcher;
+package org.ykolokoltsev.codeunitdfa.core.helpers;
 
 import com.tngtech.archunit.core.domain.JavaCodeUnit;
-import com.tngtech.archunit.core.domain.JavaMethod;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
