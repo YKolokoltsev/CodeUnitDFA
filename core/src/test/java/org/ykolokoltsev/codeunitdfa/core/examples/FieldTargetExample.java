@@ -4,14 +4,17 @@ import lombok.experimental.FieldNameConstants;
 
 @FieldNameConstants
 public class FieldTargetExample {
-
   private int x;
 
-  public void explicitSetterSameName(int x) {
+  public void setToParam(int a) {
+    this.x = a;
+  }
+
+  public void setToSameNameParam(int x) {
     this.x = x;
   }
 
-  public void explicitSetterAnyName(int y) {
-    this.x = y;
+  public void setToSecondParam(int a, int b) {
+    this.x = b;
   }
 }

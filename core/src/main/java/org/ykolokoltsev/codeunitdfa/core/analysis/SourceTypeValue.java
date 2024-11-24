@@ -13,7 +13,7 @@ public class SourceTypeValue implements AbstractValue<SourceTypeValue> {
    */
   @Getter
   @Setter
-  private OriginTypeEnum type;
+  private SourceTypeEnum type;
 
   /**
    * When joining two origin marks for the same JavaExpression node from
@@ -32,16 +32,31 @@ public class SourceTypeValue implements AbstractValue<SourceTypeValue> {
     return new SourceTypeValue(type);
   }
 
-  public enum OriginTypeEnum {
+  public enum SourceTypeEnum {
     /**
      * When this AbstractValue is used for backward analysis,
      * source expression type may be unknown before reaching its
      * declaration.
      */
     UNKNOWN,
+
+    /**
+     * Local variable, declared within code unit. May be present only as a
+     * transitive dependency and should never appear in the resulting DataSourceStore.
+     */
     LOCAL,
-    INPUT,
+
+    /**
+     * An input parameter of a method or constructor.
+     */
+    PARAMETER,
+
+    /**
+     * Field of the code unit owner class or any other object.
+     */
     FIELD,
-    CONSTANT
+    CONSTANT,
+    EXTERNAL_FUNCTION_CALL,
+    IMPLICIT_MODIFICATION
   }
 }

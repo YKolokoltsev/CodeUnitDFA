@@ -1,5 +1,6 @@
 package org.ykolokoltsev.codeunitdfa.core.launcher;
 
+import com.tngtech.archunit.core.domain.JavaCodeUnit;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import java.io.File;
 import java.net.URI;
@@ -104,9 +105,9 @@ public class CFGAnalysisLauncher {
   }
 
   @SneakyThrows
-  public ControlFlowGraph buildCfg(JavaMethod javaMethod) {
-    final Class<?> targetClass = Class.forName(javaMethod.getOwner().getName());
-    final String methodName = javaMethod.getName();
+  public ControlFlowGraph buildCfg(JavaCodeUnit codeUnit) {
+    final Class<?> targetClass = Class.forName(codeUnit.getOwner().getName());
+    final String methodName = codeUnit.getName();
     
     // find and setup sources to be compiled 
     final File srcFile = findSourceFile(targetClass);

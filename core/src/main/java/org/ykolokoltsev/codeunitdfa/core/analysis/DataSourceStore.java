@@ -7,7 +7,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
-import org.ykolokoltsev.codeunitdfa.core.analysis.SourceTypeValue.OriginTypeEnum;
+import org.ykolokoltsev.codeunitdfa.core.analysis.SourceTypeValue.SourceTypeEnum;
 import org.apache.commons.lang3.StringUtils;
 import org.checkerframework.dataflow.analysis.Store;
 import org.checkerframework.dataflow.cfg.node.BinaryOperationNode;
@@ -38,7 +38,7 @@ public class DataSourceStore implements Store<DataSourceStore> {
    * @param jx - java expression object
    * @param type - new type
    */
-  public void updateExpressionType(JavaExpression jx, OriginTypeEnum type) {
+  public void updateExpressionType(JavaExpression jx, SourceTypeEnum type) {
     Optional.ofNullable(markedExpressions.get(jx))
         .ifPresent(v -> v.setType(type));
   }
@@ -49,10 +49,10 @@ public class DataSourceStore implements Store<DataSourceStore> {
     if (source instanceof BinaryOperationNode) {
       extractOperandTree((BinaryOperationNode) source)
           .forEach(op -> markedExpressions.put(JavaExpression.fromNode(op),
-              new SourceTypeValue(OriginTypeEnum.UNKNOWN)));
+              new SourceTypeValue(SourceTypeEnum.UNKNOWN)));
     } else {
       markedExpressions.put(JavaExpression.fromNode(source),
-          new SourceTypeValue(OriginTypeEnum.UNKNOWN));
+          new SourceTypeValue(SourceTypeEnum.UNKNOWN));
     }
   }
 

@@ -2,7 +2,7 @@ package org.ykolokoltsev.codeunitdfa.core.analysis;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.ykolokoltsev.codeunitdfa.core.analysis.SourceTypeValue.OriginTypeEnum;
+import org.ykolokoltsev.codeunitdfa.core.analysis.SourceTypeValue.SourceTypeEnum;
 import org.checkerframework.dataflow.analysis.BackwardTransferFunction;
 import org.checkerframework.dataflow.analysis.ConditionalTransferResult;
 import org.checkerframework.dataflow.analysis.RegularTransferResult;
@@ -103,7 +103,7 @@ class DataSourceTransfer extends AbstractNodeVisitor<
     DataSourceStore store = in.getRegularStore();
 
     store.updateExpressionType(JavaExpression.fromNode(n), n.getInSource() ?
-        OriginTypeEnum.INPUT : OriginTypeEnum.LOCAL);
+        SourceTypeEnum.PARAMETER : SourceTypeEnum.LOCAL);
 
     return new RegularTransferResult<>(null, store);
   }
