@@ -3,7 +3,7 @@ package org.ykolokoltsev.codeunitdfa.core.examples;
 import lombok.experimental.FieldNameConstants;
 
 @FieldNameConstants
-public class FieldTargetExample {
+public class JavaFieldParameterSource {
   private int x;
 
   public void setToParam(int a) {
@@ -16,5 +16,9 @@ public class FieldTargetExample {
 
   public void setToSecondParam(int a, int b) {
     this.x = b;
+  }
+
+  public void setToBothParams(int a, int b) {
+    this.x = a + b;
   }
 }

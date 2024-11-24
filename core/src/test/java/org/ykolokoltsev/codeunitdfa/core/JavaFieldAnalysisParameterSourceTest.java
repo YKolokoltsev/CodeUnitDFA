@@ -16,20 +16,20 @@ import org.checkerframework.dataflow.cfg.ControlFlowGraph;
 import org.junit.jupiter.api.Test;
 import org.ykolokoltsev.codeunitdfa.core.analysis.DataSourceStore;
 import org.ykolokoltsev.codeunitdfa.core.analysis.JavaFieldAnalysis;
-import org.ykolokoltsev.codeunitdfa.core.examples.FieldTargetExample;
+import org.ykolokoltsev.codeunitdfa.core.examples.JavaFieldParameterSource;
 import org.ykolokoltsev.codeunitdfa.core.launcher.CFGAnalysisLauncher;
 import org.ykolokoltsev.codeunitdfa.core.model.SourceDataNode;
 
-public class JavaFieldAnalysisTest {
+public class JavaFieldAnalysisParameterSourceTest {
 
   private final JavaClass exampleClass;
   private final CFGAnalysisLauncher launcher;
 
-  public JavaFieldAnalysisTest() {
+  public JavaFieldAnalysisParameterSourceTest() {
     final JavaClasses classes = new ClassFileImporter()
         .withImportOption(new OnlyIncludeTests())
-        .importPackages(FieldTargetExample.class.getPackageName());
-    exampleClass = classes.get(FieldTargetExample.class);
+        .importPackages(JavaFieldParameterSource.class.getPackageName());
+    exampleClass = classes.get(JavaFieldParameterSource.class);
     launcher = new CFGAnalysisLauncher();
   }
 
@@ -39,7 +39,7 @@ public class JavaFieldAnalysisTest {
     final JavaMethod codeUnit = exampleClass.getMethod("setToParam", int.class);
     final ControlFlowGraph cfg = launcher.buildCfg(codeUnit);
 
-    final JavaField targetField = exampleClass.getField(FieldTargetExample.Fields.x);
+    final JavaField targetField = exampleClass.getField(JavaFieldParameterSource.Fields.x);
     final JavaFieldAnalysis analysis = new JavaFieldAnalysis(targetField);
 
     // act
@@ -50,7 +50,7 @@ public class JavaFieldAnalysisTest {
     assertEntryStore(analysis, "a");
 
     Set<SourceDataNode> sourceDataNodes = analysis.findSourceDataNodes(codeUnit);
-    assertISourceDataNodes(sourceDataNodes, "{a, PARAMETER}");
+    assertSourceDataNodes(sourceDataNodes, "{a, PARAMETER}");
   }
 
   @Test
@@ -59,7 +59,7 @@ public class JavaFieldAnalysisTest {
     final JavaMethod codeUnit = exampleClass.getMethod("setToSameNameParam", int.class);
     final ControlFlowGraph cfg = launcher.buildCfg(codeUnit);
 
-    final JavaField targetField = exampleClass.getField(FieldTargetExample.Fields.x);
+    final JavaField targetField = exampleClass.getField(JavaFieldParameterSource.Fields.x);
     final JavaFieldAnalysis analysis = new JavaFieldAnalysis(targetField);
 
     // act
@@ -70,7 +70,7 @@ public class JavaFieldAnalysisTest {
     assertEntryStore(analysis, "x");
 
     Set<SourceDataNode> sourceDataNodes = analysis.findSourceDataNodes(codeUnit);
-    assertISourceDataNodes(sourceDataNodes, "{x, PARAMETER}");
+    assertSourceDataNodes(sourceDataNodes, "{x, PARAMETER}");
   }
 
   @Test
@@ -78,7 +78,7 @@ public class JavaFieldAnalysisTest {
     // setup
     final JavaCodeUnit codeUnit = exampleClass.getMethod("setToSecondParam", int.class, int.class);
     final ControlFlowGraph cfg = launcher.buildCfg(codeUnit);
-    final JavaField targetField = exampleClass.getField(FieldTargetExample.Fields.x);
+    final JavaField targetField = exampleClass.getField(JavaFieldParameterSource.Fields.x);
     final JavaFieldAnalysis analysis = new JavaFieldAnalysis(targetField);
 
     // act
@@ -89,7 +89,26 @@ public class JavaFieldAnalysisTest {
     assertEntryStore(analysis, "b");
 
     Set<SourceDataNode> sourceDataNodes = analysis.findSourceDataNodes(codeUnit);
-    assertISourceDataNodes(sourceDataNodes, "{b, PARAMETER}");
+    assertSourceDataNodes(sourceDataNodes, "{b, PARAMETER}");
+  }
+
+  @Test
+  void setToBothParams_works() {
+    // setup
+    final JavaCodeUnit codeUnit = exampleClass.getMethod("setToBothParams", int.class, int.class);
+    final ControlFlowGraph cfg = launcher.buildCfg(codeUnit);
+    final JavaField targetField = exampleClass.getField(JavaFieldParameterSource.Fields.x);
+    final JavaFieldAnalysis analysis = new JavaFieldAnalysis(targetField);
+
+    // act
+    analysis.performAnalysis(cfg);
+
+    // assert
+    launcher.saveAnalysisToDot(cfg, analysis, true);
+    assertEntryStore(analysis, "a", "b");
+
+    Set<SourceDataNode> sourceDataNodes = analysis.findSourceDataNodes(codeUnit);
+    assertSourceDataNodes(sourceDataNodes, "{a, PARAMETER}", "{b, PARAMETER}");
   }
 
   private void assertEntryStore(JavaFieldAnalysis analysis, String ... expectedExpressions) {
@@ -102,7 +121,7 @@ public class JavaFieldAnalysisTest {
     assertThat(actualExpressions).containsExactlyInAnyOrderElementsOf(List.of(expectedExpressions));
   }
 
-  private void assertISourceDataNodes(Set<SourceDataNode> sourceDataNodes, String ... expectedSourceDataNodes) {
+  private void assertSourceDataNodes(Set<SourceDataNode> sourceDataNodes, String ... expectedSourceDataNodes) {
     final Set<String> actualSourceDataNodes = sourceDataNodes.stream()
         .map(sdn -> String.format("{%s, %s}", sdn.getUnitName(), sdn.getSourceType()))
         .collect(Collectors.toSet());
