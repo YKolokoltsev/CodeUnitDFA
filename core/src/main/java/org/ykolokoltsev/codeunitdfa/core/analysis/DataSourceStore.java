@@ -31,17 +31,6 @@ public class DataSourceStore implements Store<DataSourceStore> {
   }
 
   /**
-   * Returns expression with the given name, and throws in case if element is not present.
-   */
-  public JavaExpression getByNodeName(
-      final Node node
-  ) {
-    return informationSources.keySet().stream()
-        .filter(k -> k.toString().equals(node.toString()))
-        .collect(CollectionUtils.toSingleton());
-  }
-
-  /**
    * Returns expression with the given name or empty if not found.
    */
   public Optional<JavaExpression> findByName(
@@ -60,7 +49,11 @@ public class DataSourceStore implements Store<DataSourceStore> {
     informationSources.get(expression).setType(type);
   }
 
-  public void addDependency(Node target, Node source) {
+  public boolean isEmpty() {
+    return informationSources.isEmpty();
+  }
+
+  public void add(final Node source) {
     // binary operations may be nested
     if (source instanceof BinaryOperationNode) {
       extractOperandTree((BinaryOperationNode) source)
@@ -72,6 +65,11 @@ public class DataSourceStore implements Store<DataSourceStore> {
       final JavaExpression expression = JavaExpression.fromNode(source);
       informationSources.put(expression, new SourceTypeValue(expression));
     }
+  }
+
+  public void remove(final Node node) {
+    final JavaExpression expression = JavaExpression.fromNode(node);
+    informationSources.remove(expression);
   }
 
   @Override

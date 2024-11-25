@@ -80,7 +80,7 @@ public class JavaFieldAnalysisConstantTest {
         arguments(
             "fromConstantVariable",
             new Class<?>[] {},
-            List.of("{a, DECLARED}", "{33, CONSTANT}"),
+            List.of("{33, CONSTANT}"),
             List.of("{33, JavaMethod}")),
         arguments(
             "fromConstantExpression",

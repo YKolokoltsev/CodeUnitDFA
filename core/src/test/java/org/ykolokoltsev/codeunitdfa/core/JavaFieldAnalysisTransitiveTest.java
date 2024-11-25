@@ -75,19 +75,43 @@ public class JavaFieldAnalysisTransitiveTest {
         arguments(
             "setToParamViaOneLocal",
             new Class<?>[] {int.class},
-            List.of("{a, LOCAL}", "{b, DECLARED}"),
+            List.of("{a, LOCAL}"),
+            List.of("{a, JavaParameter}")),
+        arguments(
+            "setToParamViaField",
+            new Class<?>[] {int.class},
+            List.of("{a, LOCAL}"),
             List.of("{a, JavaParameter}")),
         arguments(
             "setToParamViaTwoLocals",
             new Class<?>[] {int.class},
-            List.of("{a, LOCAL}", "{b, DECLARED}", "{c, DECLARED}"),
-            List.of("{a, JavaParameter}"))
-        // TODO: Add support for more complex transitivity cases!
-        /*arguments(
+            List.of("{a, LOCAL}"),
+            List.of("{a, JavaParameter}")),
+        arguments(
             "setToSecondParamViaFirst",
             new Class<?>[] {int.class, int.class},
+            List.of("{b, LOCAL}"),
+            List.of("{b, JavaParameter}")),
+        arguments(
+            "setToBothParamsViaOverride",
+            new Class<?>[] {int.class, int.class},
             List.of("{a, LOCAL}", "{b, LOCAL}"),
-            List.of("{b, JavaParameter}"))*/
+            List.of("{a, JavaParameter}", "{b, JavaParameter}")),
+        arguments(
+            "setToParamAndConstant",
+            new Class<?>[] {int.class},
+            List.of("{a, LOCAL}", "{10, CONSTANT}"),
+            List.of("{a, JavaParameter}", "{10, JavaMethod}")),
+        arguments(
+            "resetPreviousValue",
+            new Class<?>[] {int.class, int.class},
+            List.of("{b, LOCAL}"),
+            List.of("{b, JavaParameter}")),
+        arguments(
+            "useFieldAsAsLocalVariable",
+            new Class<?>[] {int.class, int.class},
+            List.of("{a, LOCAL}", "{b, LOCAL}"),
+            List.of("{a, JavaParameter}", "{b, JavaParameter}"))
     );
   }
 

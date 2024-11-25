@@ -81,9 +81,12 @@ class DataSourceTransfer extends AbstractNodeVisitor<
     final DataSourceStore store = in.getRegularStore();
     final Node target = n.getTarget();
 
-    if (store.isPresent(target)
-        || analysis.isTargetNode(target)) {
-      store.addDependency(n.getTarget(), n.getExpression());
+    if (store.isPresent(target)) {
+      store.remove(target);
+      store.add(n.getExpression());
+
+    } else if (analysis.isTargetNode(target) && store.isEmpty()) {
+      store.add(n.getExpression());
     }
 
     return new RegularTransferResult<>(null, store);
@@ -109,8 +112,7 @@ class DataSourceTransfer extends AbstractNodeVisitor<
       final VariableDeclarationNode n,
       final TransferInput<SourceTypeValue, DataSourceStore> in) {
     final DataSourceStore store = in.getRegularStore();
-    final JavaExpression e = store.getByNodeName(n);
-    store.updateSourceType(e, SourceTypeEnum.DECLARED);
+    store.findByName(n).ifPresent(e -> store.updateSourceType(e, SourceTypeEnum.DECLARED));
     return new RegularTransferResult<>(null, store);
   }
 }
