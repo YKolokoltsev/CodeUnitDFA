@@ -3,17 +3,20 @@ package org.ykolokoltsev.codeunitdfa.core.model;
 import com.sun.source.tree.VariableTree;
 import com.tngtech.archunit.core.domain.JavaCodeUnit;
 import com.tngtech.archunit.core.domain.JavaField;
+import com.tngtech.archunit.core.domain.JavaFieldAccess.AccessType;
 import com.tngtech.archunit.core.domain.JavaParameter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.lang.model.element.Name;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
 import org.checkerframework.dataflow.cfg.UnderlyingAST.CFGMethod;
 import org.checkerframework.dataflow.expression.FieldAccess;
 import org.checkerframework.dataflow.expression.JavaExpression;
 import org.checkerframework.dataflow.expression.LocalVariable;
+import org.ykolokoltsev.codeunitdfa.core.analysis.CollectionUtils;
 import org.ykolokoltsev.codeunitdfa.core.analysis.SourceTypeValue;
 import org.ykolokoltsev.codeunitdfa.core.analysis.SourceTypeValue.SourceTypeEnum;
 import org.ykolokoltsev.codeunitdfa.core.exception.UnsupportedSourceTypeException;
@@ -64,14 +67,20 @@ public class SourceDataNodeBuilder {
     }
   }
 
+  // TODO: Ensure it works for the class that does not own codeUnit.
   /**
-   * Search for the corresponding field in the full classes list of the ArchUnit model?
+   * Searches for the corresponding field in the full classes list of the ArchUnit model.
    */
   private JavaMemberSourceDataNodeImpl fromField(
       JavaExpression javaExpression
   ) {
     final String fieldName = ((FieldAccess) javaExpression).getField().getSimpleName().toString();
-    final JavaField javaField = codeUnit.getOwner().getField(fieldName);
+    final JavaField javaField = codeUnit.getFieldAccesses().stream()
+        .filter(fa -> fa.getName().equals(fieldName))
+        .map(fa -> fa.getTarget().getOwner())
+        .map(o -> o.getField(fieldName))
+        .collect(CollectionUtils.reduceSameToSingleton());
+
     return JavaMemberSourceDataNodeImpl.builder()
         .expression(javaExpression)
         .expressionOwner(javaField)
