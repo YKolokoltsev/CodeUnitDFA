@@ -7,13 +7,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
-import org.ykolokoltsev.codeunitdfa.core.analysis.SourceTypeValue.SourceTypeEnum;
 import org.apache.commons.lang3.StringUtils;
 import org.checkerframework.dataflow.analysis.Store;
 import org.checkerframework.dataflow.cfg.node.BinaryOperationNode;
 import org.checkerframework.dataflow.cfg.node.Node;
 import org.checkerframework.dataflow.cfg.visualize.CFGVisualizer;
 import org.checkerframework.dataflow.expression.JavaExpression;
+import org.ykolokoltsev.codeunitdfa.core.analysis.SourceTypeValue.SourceTypeEnum;
 
 @Getter
 public class DataSourceStore implements Store<DataSourceStore> {
@@ -64,11 +64,13 @@ public class DataSourceStore implements Store<DataSourceStore> {
     // binary operations may be nested
     if (source instanceof BinaryOperationNode) {
       extractOperandTree((BinaryOperationNode) source)
-          .forEach(op -> informationSources.put(JavaExpression.fromNode(op),
-              new SourceTypeValue(SourceTypeEnum.UNKNOWN)));
+          .forEach(op -> {
+            final JavaExpression expression = JavaExpression.fromNode(op);
+            informationSources.put(expression, new SourceTypeValue(expression));
+          });
     } else {
-      informationSources.put(JavaExpression.fromNode(source),
-          new SourceTypeValue(SourceTypeEnum.UNKNOWN));
+      final JavaExpression expression = JavaExpression.fromNode(source);
+      informationSources.put(expression, new SourceTypeValue(expression));
     }
   }
 

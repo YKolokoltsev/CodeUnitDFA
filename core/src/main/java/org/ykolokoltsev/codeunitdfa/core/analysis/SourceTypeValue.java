@@ -6,12 +6,28 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.checkerframework.dataflow.analysis.AbstractValue;
+import org.checkerframework.dataflow.expression.JavaExpression;
+import org.checkerframework.dataflow.expression.LocalVariable;
+import org.checkerframework.dataflow.expression.ValueLiteral;
 
 @Data
 @AllArgsConstructor
 public class SourceTypeValue implements AbstractValue<SourceTypeValue> {
 
   private SourceTypeEnum type;
+
+  /**
+   * Initializes value based on the source node type.
+   */
+  public SourceTypeValue(final JavaExpression expression) {
+    if (expression instanceof ValueLiteral) {
+      type = SourceTypeEnum.CONSTANT;
+    } else if (expression instanceof LocalVariable) {
+      type = SourceTypeEnum.LOCAL;
+    } else {
+      type = SourceTypeEnum.UNKNOWN;
+    }
+  }
 
   // TODO: Test for real expressions (where this method is used).
   /**
@@ -35,7 +51,7 @@ public class SourceTypeValue implements AbstractValue<SourceTypeValue> {
   @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
   public enum SourceTypeEnum {
     /**
-     * In backwards analysis expression type is unknown before its declaration.
+     * Expression is ether undefined or not supported.
      */
     UNKNOWN(0),
 
@@ -45,15 +61,15 @@ public class SourceTypeValue implements AbstractValue<SourceTypeValue> {
     LOCAL(1),
 
     /**
-     * A local variable declared within on of the code blocks.
+     * A local variable declared within the code block.
      */
     DECLARED(2),
 
     /**
-     * Field of the code unit owner class or any other object.
+     * Constant literal of any type.
      */
-    // TODO: use or delete these types.
     CONSTANT(2),
+    // TODO: use or delete these types.
     EXTERNAL_FUNCTION_CALL(2),
     IMPLICIT_MODIFICATION(2);
 

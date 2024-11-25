@@ -13,6 +13,7 @@ import org.checkerframework.dataflow.cfg.UnderlyingAST.CFGMethod;
 import org.checkerframework.dataflow.expression.JavaExpression;
 import org.checkerframework.dataflow.expression.LocalVariable;
 import org.ykolokoltsev.codeunitdfa.core.analysis.SourceTypeValue;
+import org.ykolokoltsev.codeunitdfa.core.analysis.SourceTypeValue.SourceTypeEnum;
 import org.ykolokoltsev.codeunitdfa.core.exception.UnsupportedSourceTypeException;
 
 public class SourceDataNodeBuilder {
@@ -52,6 +53,8 @@ public class SourceDataNodeBuilder {
     switch (value.getType()) {
       case LOCAL:
         return fromParameter(javaExpression);
+      case CONSTANT:
+        return fromConstant(javaExpression);
       default:
         throw new UnsupportedSourceTypeException();
     }
@@ -73,8 +76,11 @@ public class SourceDataNodeBuilder {
   private JavaMemberSourceDataNodeImpl fromConstant(
       JavaExpression javaExpression
   ) {
-    //TODO: Implement.
-    return null;
+    return JavaMemberSourceDataNodeImpl.builder()
+        .expression(javaExpression)
+        .expressionOwner(codeUnit)
+        .sourceType(SourceTypeEnum.CONSTANT)
+        .build();
   }
 
   /**
