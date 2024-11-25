@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.checkerframework.dataflow.analysis.AbstractValue;
+import org.checkerframework.dataflow.expression.FieldAccess;
 import org.checkerframework.dataflow.expression.JavaExpression;
 import org.checkerframework.dataflow.expression.LocalVariable;
 import org.checkerframework.dataflow.expression.ValueLiteral;
@@ -24,6 +25,8 @@ public class SourceTypeValue implements AbstractValue<SourceTypeValue> {
       type = SourceTypeEnum.CONSTANT;
     } else if (expression instanceof LocalVariable) {
       type = SourceTypeEnum.LOCAL;
+    } else if (expression instanceof FieldAccess) {
+      type = SourceTypeEnum.FIELD;
     } else {
       type = SourceTypeEnum.UNKNOWN;
     }
@@ -69,6 +72,11 @@ public class SourceTypeValue implements AbstractValue<SourceTypeValue> {
      * Constant literal of any type.
      */
     CONSTANT(2),
+
+    /**
+     * A class field.
+     */
+    FIELD(2),
     // TODO: use or delete these types.
     EXTERNAL_FUNCTION_CALL(2),
     IMPLICIT_MODIFICATION(2);

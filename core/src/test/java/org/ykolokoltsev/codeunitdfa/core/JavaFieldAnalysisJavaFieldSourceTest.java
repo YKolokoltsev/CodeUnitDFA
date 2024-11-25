@@ -19,13 +19,13 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.ykolokoltsev.codeunitdfa.core.analysis.DataSourceStore;
 import org.ykolokoltsev.codeunitdfa.core.analysis.JavaFieldAnalysis;
-import org.ykolokoltsev.codeunitdfa.core.examples.JavaFieldConstantSource;
+import org.ykolokoltsev.codeunitdfa.core.examples.JavaFieldJavaFieldSource;
 import org.ykolokoltsev.codeunitdfa.core.examples.JavaFieldParameterSource;
 import org.ykolokoltsev.codeunitdfa.core.helpers.CFGAnalysisLauncher;
 import org.ykolokoltsev.codeunitdfa.core.model.CodeUnitAnalysisInterpreter;
 import org.ykolokoltsev.codeunitdfa.core.model.SourceDataNode;
 
-public class JavaFieldAnalysisConstantTest {
+public class JavaFieldAnalysisJavaFieldSourceTest {
 
   private static JavaClass exampleClass;
   private static CFGAnalysisLauncher launcher;
@@ -35,15 +35,15 @@ public class JavaFieldAnalysisConstantTest {
   public static void beforeAll() {
     final JavaClasses classes = new ClassFileImporter()
         .withImportOption(new OnlyIncludeTests())
-        .importPackages(JavaFieldConstantSource.class.getPackageName());
-    exampleClass = classes.get(JavaFieldConstantSource.class);
+        .importPackages(JavaFieldJavaFieldSource.class.getPackageName());
+    exampleClass = classes.get(JavaFieldJavaFieldSource.class);
     launcher = new CFGAnalysisLauncher();
     interpreter = new CodeUnitAnalysisInterpreter();
   }
 
   @ParameterizedTest(name = "{0}")
-  @MethodSource("javaFieldConstantSource_data")
-  void javaFieldConstantSource_methods_works(
+  @MethodSource("javaFieldJavaFieldSource_data")
+  void javaFieldJavaFieldSource_methods_works(
       final String methodName,
       final Class<?>[] methodParams,
       final List<String> expectedSourceExpressions,
@@ -70,23 +70,28 @@ public class JavaFieldAnalysisConstantTest {
     ModelAsserts.assertSourceDataNodes(sourceDataNodes, expectedSourceDataNodes);
   }
 
-  private static Stream<Arguments> javaFieldConstantSource_data() {
+  private static Stream<Arguments> javaFieldJavaFieldSource_data() {
     return Stream.of(
         arguments(
-            "fromConstantLiteral",
+            "setFieldFromAnotherField",
             new Class<?>[] {},
-            List.of("{17, CONSTANT}"),
-            List.of("{17, JavaMethod}")),
+            List.of("{this.y, FIELD}"),
+            List.of("{this.y, JavaField}")),
         arguments(
-            "fromConstantVariable",
+            "notAFieldTarget",
             new Class<?>[] {},
-            List.of("{33, CONSTANT}"),
-            List.of("{33, JavaMethod}")),
+            List.of(),
+            List.of()),
         arguments(
-            "fromConstantExpression",
+            "setUsingPreviousValue",
             new Class<?>[] {},
-            List.of("{17, CONSTANT}", "{33, CONSTANT}"),
-            List.of("{17, JavaMethod}", "{33, JavaMethod}"))
+            List.of("{this.x, FIELD}", "{1, CONSTANT}"),
+            List.of("{this.x, JavaField}", "{1, JavaMethod}")),
+        arguments(
+            "useOtherFieldAsVariable",
+            new Class<?>[] {},
+            List.of("{this.x, FIELD}", "{this.y, FIELD}"),
+            List.of("{this.x, JavaField}", "{this.y, JavaField}"))
     );
   }
 

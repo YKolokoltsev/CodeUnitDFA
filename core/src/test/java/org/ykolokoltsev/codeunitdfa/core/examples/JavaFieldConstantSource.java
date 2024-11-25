@@ -1,6 +1,6 @@
 package org.ykolokoltsev.codeunitdfa.core.examples;
 
-public class JavaFieldConstant {
+public class JavaFieldConstantSource {
   public int x;
 
   void fromConstantLiteral() {

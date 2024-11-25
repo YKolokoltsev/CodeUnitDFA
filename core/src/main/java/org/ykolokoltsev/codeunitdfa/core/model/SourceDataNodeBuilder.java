@@ -2,6 +2,7 @@ package org.ykolokoltsev.codeunitdfa.core.model;
 
 import com.sun.source.tree.VariableTree;
 import com.tngtech.archunit.core.domain.JavaCodeUnit;
+import com.tngtech.archunit.core.domain.JavaField;
 import com.tngtech.archunit.core.domain.JavaParameter;
 import java.util.HashMap;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.Optional;
 import javax.lang.model.element.Name;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
 import org.checkerframework.dataflow.cfg.UnderlyingAST.CFGMethod;
+import org.checkerframework.dataflow.expression.FieldAccess;
 import org.checkerframework.dataflow.expression.JavaExpression;
 import org.checkerframework.dataflow.expression.LocalVariable;
 import org.ykolokoltsev.codeunitdfa.core.analysis.SourceTypeValue;
@@ -55,6 +57,8 @@ public class SourceDataNodeBuilder {
         return fromParameter(javaExpression);
       case CONSTANT:
         return fromConstant(javaExpression);
+      case FIELD:
+        return fromField(javaExpression);
       default:
         throw new UnsupportedSourceTypeException();
     }
@@ -66,8 +70,13 @@ public class SourceDataNodeBuilder {
   private JavaMemberSourceDataNodeImpl fromField(
       JavaExpression javaExpression
   ) {
-    //TODO: Implement.
-    return null;
+    final String fieldName = ((FieldAccess) javaExpression).getField().getSimpleName().toString();
+    final JavaField javaField = codeUnit.getOwner().getField(fieldName);
+    return JavaMemberSourceDataNodeImpl.builder()
+        .expression(javaExpression)
+        .expressionOwner(javaField)
+        .sourceType(SourceTypeEnum.FIELD)
+        .build();
   }
 
   /**
