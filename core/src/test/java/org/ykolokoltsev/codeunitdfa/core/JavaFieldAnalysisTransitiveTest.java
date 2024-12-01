@@ -27,6 +27,8 @@ import org.ykolokoltsev.codeunitdfa.core.model.SourceDataNode;
 
 public class JavaFieldAnalysisTransitiveTest {
 
+  private static final String JAVA_FIELD_NAME = "x";
+
   private static JavaClass exampleClass;
   private static CFGAnalysisLauncher launcher;
   private static CodeUnitAnalysisInterpreter interpreter;
@@ -53,7 +55,7 @@ public class JavaFieldAnalysisTransitiveTest {
     final JavaMethod codeUnit = exampleClass.getMethod(methodName, methodParams);
     final ControlFlowGraph cfg = launcher.buildCfg(codeUnit);
 
-    final JavaField targetField = exampleClass.getField(JavaFieldParameterSource.Fields.x);
+    final JavaField targetField = exampleClass.getField(JAVA_FIELD_NAME);
     final JavaFieldAnalysis analysis = new JavaFieldAnalysis(targetField);
 
     // act
@@ -114,6 +116,5 @@ public class JavaFieldAnalysisTransitiveTest {
             List.of("{a, JavaParameter}", "{b, JavaParameter}"))
     );
   }
-
 
 }
