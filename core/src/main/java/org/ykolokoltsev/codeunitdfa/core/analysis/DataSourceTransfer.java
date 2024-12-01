@@ -3,6 +3,7 @@ package org.ykolokoltsev.codeunitdfa.core.analysis;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.checkerframework.dataflow.cfg.node.CaseNode;
+import org.checkerframework.dataflow.cfg.node.ExpressionStatementNode;
 import org.checkerframework.dataflow.cfg.node.VariableDeclarationNode;
 import org.checkerframework.dataflow.expression.JavaExpression;
 import org.ykolokoltsev.codeunitdfa.core.analysis.SourceTypeValue.SourceTypeEnum;
@@ -129,6 +130,9 @@ class DataSourceTransfer extends AbstractNodeVisitor<
       if (n instanceof CaseNode) {
         final Node switchExpr = ((CaseNode) n).getSwitchOperand().getExpression();
         store.add(switchExpr);
+      } else if (n instanceof ExpressionStatementNode) {
+        // ignore, because expressions like i++ are converted into i = i + 1
+        return;
       } else {
         store.add(n);
       }

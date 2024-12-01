@@ -9,8 +9,10 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.analysis.Store;
 import org.checkerframework.dataflow.cfg.node.BinaryOperationNode;
+import org.checkerframework.dataflow.cfg.node.ExpressionStatementNode;
 import org.checkerframework.dataflow.cfg.node.Node;
 import org.checkerframework.dataflow.cfg.visualize.CFGVisualizer;
 import org.checkerframework.dataflow.expression.JavaExpression;
@@ -70,6 +72,7 @@ public class DataSourceStore implements Store<DataSourceStore> {
             final JavaExpression expression = JavaExpression.fromNode(op);
             informationSources.put(expression, new SourceTypeValue(expression));
           });
+
     } else {
       final JavaExpression expression = JavaExpression.fromNode(source);
       informationSources.put(expression, new SourceTypeValue(expression));
@@ -87,6 +90,22 @@ public class DataSourceStore implements Store<DataSourceStore> {
     copy.informationSources.putAll(informationSources);
     copy.awaitConditional = awaitConditional;
     return copy;
+  }
+
+  @Override
+  public boolean equals(@Nullable Object o) {
+    if (o == null) {
+      return false;
+    }
+
+    if (o instanceof DataSourceStore) {
+      final DataSourceStore store = (DataSourceStore) o;
+      return this.informationSources.equals(store.informationSources)
+          && this.awaitConditional == store.awaitConditional;
+
+    } else {
+      return false;
+    }
   }
 
   @Override

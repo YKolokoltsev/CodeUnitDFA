@@ -24,7 +24,7 @@ import org.ykolokoltsev.codeunitdfa.core.helpers.CFGAnalysisLauncher;
 import org.ykolokoltsev.codeunitdfa.core.model.CodeUnitAnalysisInterpreter;
 import org.ykolokoltsev.codeunitdfa.core.model.SourceDataNode;
 
-public class JavaFieldLogicTest {
+public class JavaFieldAnalysisLogicTest {
   private static final String JAVA_FIELD_NAME = "x";
 
   private static JavaClass exampleClass;
