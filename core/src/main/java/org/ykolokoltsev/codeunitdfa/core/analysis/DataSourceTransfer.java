@@ -2,6 +2,7 @@ package org.ykolokoltsev.codeunitdfa.core.analysis;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.checkerframework.dataflow.cfg.node.CaseNode;
 import org.checkerframework.dataflow.cfg.node.VariableDeclarationNode;
 import org.checkerframework.dataflow.expression.JavaExpression;
 import org.ykolokoltsev.codeunitdfa.core.analysis.SourceTypeValue.SourceTypeEnum;
@@ -65,6 +66,7 @@ class DataSourceTransfer extends AbstractNodeVisitor<
 
     } else {
       final DataSourceStore store = in.getRegularStore();
+      checkAwaitConditional(n, store);
       return new RegularTransferResult<>(null, store);
     }
   }
@@ -80,6 +82,8 @@ class DataSourceTransfer extends AbstractNodeVisitor<
   ) {
     final DataSourceStore store = in.getRegularStore();
     final Node target = n.getTarget();
+
+    checkAwaitConditional(n.getExpression(), store);
 
     if (store.isPresent(target)) {
       store.remove(target);
@@ -100,6 +104,7 @@ class DataSourceTransfer extends AbstractNodeVisitor<
       final LocalVariableNode n,
       final TransferInput<SourceTypeValue, DataSourceStore> in) {
     final DataSourceStore store = in.getRegularStore();
+    checkAwaitConditional(n, store);
     store.findByName(n).ifPresent(e -> store.updateSourceType(e, SourceTypeEnum.LOCAL));
     return new RegularTransferResult<>(null, store);
   }
@@ -114,5 +119,20 @@ class DataSourceTransfer extends AbstractNodeVisitor<
     final DataSourceStore store = in.getRegularStore();
     store.findByName(n).ifPresent(e -> store.updateSourceType(e, SourceTypeEnum.DECLARED));
     return new RegularTransferResult<>(null, store);
+  }
+
+  private void checkAwaitConditional(
+      Node n,
+      final DataSourceStore store
+  ) {
+    if (store.isAwaitConditional()) {
+      if (n instanceof CaseNode) {
+        final Node switchExpr = ((CaseNode) n).getSwitchOperand().getExpression();
+        store.add(switchExpr);
+      } else {
+        store.add(n);
+      }
+      store.setAwaitConditional(false);
+    }
   }
 }

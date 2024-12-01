@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.checkerframework.dataflow.analysis.Store;
 import org.checkerframework.dataflow.cfg.node.BinaryOperationNode;
@@ -22,6 +23,14 @@ public class DataSourceStore implements Store<DataSourceStore> {
    * Nodes that participate in formation of the target value.
    */
   private final Map<JavaExpression, SourceTypeValue> informationSources = new HashMap<>();
+  /**
+   * When {@link #leastUpperBound} joins two sources with distinct {@link #informationSources},
+   * it means that conditional expression that produced data source store branching also
+   * contributes into target data. By moving backwards, we need to await for the nearest
+   * boolean expression and add it to {@link #informationSources}.
+   */
+  @Setter
+  private boolean awaitConditional = false;
 
   /**
    * Checks if a given node is already present in the {@link #informationSources} collection.
@@ -76,6 +85,7 @@ public class DataSourceStore implements Store<DataSourceStore> {
   public DataSourceStore copy() {
     DataSourceStore copy = new DataSourceStore();
     copy.informationSources.putAll(informationSources);
+    copy.awaitConditional = awaitConditional;
     return copy;
   }
 
@@ -91,6 +101,7 @@ public class DataSourceStore implements Store<DataSourceStore> {
 
       } else {
         lubStore.informationSources.put(key, value);
+        lubStore.awaitConditional = true;
       }
     });
     return lubStore;
@@ -116,7 +127,8 @@ public class DataSourceStore implements Store<DataSourceStore> {
     if (StringUtils.isBlank(originExpressions)) {
       originExpressions = "none";
     }
-    return viz.visualizeStoreKeyVal("Discovered sources: ", originExpressions);
+    originExpressions += String.format("; awaitConditional = %s;", awaitConditional);
+    return viz.visualizeStoreKeyVal("Store: ", originExpressions);
   }
 
   private Set<Node> extractOperandTree(BinaryOperationNode binaryOperationNode) {

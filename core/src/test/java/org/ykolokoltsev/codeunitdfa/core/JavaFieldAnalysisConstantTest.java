@@ -20,7 +20,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.ykolokoltsev.codeunitdfa.core.analysis.DataSourceStore;
 import org.ykolokoltsev.codeunitdfa.core.analysis.JavaFieldAnalysis;
 import org.ykolokoltsev.codeunitdfa.core.examples.JavaFieldConstantSource;
-import org.ykolokoltsev.codeunitdfa.core.examples.JavaFieldParameterSource;
 import org.ykolokoltsev.codeunitdfa.core.helpers.CFGAnalysisLauncher;
 import org.ykolokoltsev.codeunitdfa.core.model.CodeUnitAnalysisInterpreter;
 import org.ykolokoltsev.codeunitdfa.core.model.SourceDataNode;
@@ -88,9 +87,13 @@ public class JavaFieldAnalysisConstantTest {
             "fromConstantExpression",
             new Class<?>[] {},
             List.of("{17, CONSTANT}", "{33, CONSTANT}"),
-            List.of("{17, JavaMethod}", "{33, JavaMethod}"))
+            List.of("{17, JavaMethod}", "{33, JavaMethod}")),
+        arguments(
+            "reassignmentWithinSameBlock",
+            new Class<?>[] {},
+            List.of("{20, CONSTANT}"),
+            List.of("{20, JavaMethod}"))
     );
   }
-
 
 }

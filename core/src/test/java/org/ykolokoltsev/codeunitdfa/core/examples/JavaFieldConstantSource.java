@@ -15,4 +15,10 @@ public class JavaFieldConstantSource {
   void fromConstantExpression() {
     this.x = 33 + 17;
   }
+
+  void reassignmentWithinSameBlock() {
+    x = 10;
+    x = 20;
+  }
+
 }
