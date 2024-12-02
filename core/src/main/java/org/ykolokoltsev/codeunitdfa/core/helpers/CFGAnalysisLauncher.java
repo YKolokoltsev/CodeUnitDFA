@@ -115,7 +115,7 @@ public class CFGAnalysisLauncher {
     final Iterable< ? extends JavaFileObject > sources =
         fileManager.getJavaFileObjectsFromFiles(List.of(srcFile));
 
-    // setup AbstractProcessor for building CFG, required for dataflow analysis
+    // setup AbstractProcessors for building CFG, required for dataflow analysis
     CFGProcessor cfgProcessor = new CFGProcessor(targetClass.getSimpleName(), methodName);
     
     // run annotation processing phase and print diagnostics

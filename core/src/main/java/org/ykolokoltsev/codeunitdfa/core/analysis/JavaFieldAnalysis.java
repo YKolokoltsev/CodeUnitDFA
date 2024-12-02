@@ -1,15 +1,15 @@
 package org.ykolokoltsev.codeunitdfa.core.analysis;
 
 import com.tngtech.archunit.core.domain.JavaField;
+import java.util.Optional;
 import org.checkerframework.dataflow.analysis.BackwardAnalysisImpl;
-import org.checkerframework.dataflow.cfg.ControlFlowGraph;
-import org.checkerframework.dataflow.cfg.block.Block;
+import org.checkerframework.dataflow.cfg.node.AssignmentNode;
 import org.checkerframework.dataflow.cfg.node.FieldAccessNode;
 import org.checkerframework.dataflow.cfg.node.Node;
-import org.checkerframework.javacutil.BugInCF;
 
 public class JavaFieldAnalysis
-    extends BackwardAnalysisImpl<SourceTypeValue, DataSourceStore, DataSourceTransfer> {
+    extends BackwardAnalysisImpl<SourceTypeValue, DataSourceStore, DataSourceTransfer>
+    implements DataSourceBackwardAnalysis {
 
   private final JavaField target;
 
@@ -20,34 +20,25 @@ public class JavaFieldAnalysis
   }
 
   /**
-   * Check if node visited by transfer function is same as target JavaField.
+   * Extract source from AssignmentNode, if value is assigned to corresponding {@link #target}
+   * java field.
    */
-  public boolean isTargetNode(Node node) {
-    if (node instanceof FieldAccessNode) {
-      final FieldAccessNode fieldAccessNode = (FieldAccessNode) node;
-      return fieldAccessNode.getFieldName().equals(target.getName());
-
-    } else {
-      return false;
-    }
-  }
-
   @Override
-  public void performAnalysis(ControlFlowGraph cfg) {
-    if (isRunning) {
-      throw new BugInCF("performAnalysis() shouldn't be called when the analysis is running.");
-    }
-    isRunning = true;
-    try {
-      init(cfg);
-      while (!worklist.isEmpty()) {
-        Block b = worklist.poll();
-        performAnalysisBlock(b);
+  public Optional<Node> getSourceNode(Node node) {
+    if (node instanceof AssignmentNode) {
+      final Node assignmentTarget = ((AssignmentNode) node).getTarget();
+      if (assignmentTarget instanceof FieldAccessNode) {
+        final FieldAccessNode fieldAccess = (FieldAccessNode) assignmentTarget;
+        final String fieldSignature = String.format(
+            "JavaField{%s.%s}",
+            fieldAccess.getReceiver().getType(),
+            fieldAccess.getFieldName());
+        if (target.toString().equals(fieldSignature)) {
+          final Node assignmentSource = ((AssignmentNode) node).getExpression();
+          return Optional.of(assignmentSource);
+        }
       }
-    } finally {
-      assert isRunning;
-      // In case performAnalysisBlock crashed, reset isRunning to false.
-      isRunning = false;
     }
+    return Optional.empty();
   }
 }

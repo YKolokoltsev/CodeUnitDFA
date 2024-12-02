@@ -1,9 +1,11 @@
 package org.ykolokoltsev.codeunitdfa.core.analysis;
 
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.checkerframework.dataflow.cfg.node.CaseNode;
 import org.checkerframework.dataflow.cfg.node.ExpressionStatementNode;
+import org.checkerframework.dataflow.cfg.node.MethodInvocationNode;
 import org.checkerframework.dataflow.cfg.node.VariableDeclarationNode;
 import org.checkerframework.dataflow.expression.JavaExpression;
 import org.ykolokoltsev.codeunitdfa.core.analysis.SourceTypeValue.SourceTypeEnum;
@@ -28,7 +30,7 @@ class DataSourceTransfer extends AbstractNodeVisitor<
   /**
    * The analysis used by this transfer function.
    */
-  private final JavaFieldAnalysis analysis;
+  private final DataSourceBackwardAnalysis analysis;
 
   /**
    * Returns the initial store that should be used at the normal exit block.
@@ -85,15 +87,27 @@ class DataSourceTransfer extends AbstractNodeVisitor<
     final Node target = n.getTarget();
 
     checkAwaitConditional(n.getExpression(), store);
+    final Optional<Node> maybeSource = analysis.getSourceNode(n);
 
     if (store.isPresent(target)) {
       store.remove(target);
       store.add(n.getExpression());
 
-    } else if (analysis.isTargetNode(target) && store.isEmpty()) {
-      store.add(n.getExpression());
+    } else if (maybeSource.isPresent() && store.isEmpty()) {
+      store.add(maybeSource.get());
     }
 
+    return new RegularTransferResult<>(null, store);
+  }
+
+  @Override
+  public TransferResult<SourceTypeValue, DataSourceStore> visitMethodInvocation(
+      MethodInvocationNode n,
+      final TransferInput<SourceTypeValue, DataSourceStore> in
+  ) {
+    final DataSourceStore store = in.getRegularStore();
+    final Optional<Node> maybeSource = analysis.getSourceNode(n);
+    maybeSource.ifPresent(store::add);
     return new RegularTransferResult<>(null, store);
   }
 

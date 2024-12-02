@@ -12,7 +12,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.analysis.Store;
 import org.checkerframework.dataflow.cfg.node.BinaryOperationNode;
-import org.checkerframework.dataflow.cfg.node.ExpressionStatementNode;
 import org.checkerframework.dataflow.cfg.node.Node;
 import org.checkerframework.dataflow.cfg.visualize.CFGVisualizer;
 import org.checkerframework.dataflow.expression.JavaExpression;
@@ -108,6 +107,8 @@ public class DataSourceStore implements Store<DataSourceStore> {
     }
   }
 
+  // TODO: This operation should give same result if "this" and "other" change their places
+  // TODO: we must await conditional only in case if we join stores from non-exceptional blocks
   @Override
   public DataSourceStore leastUpperBound(DataSourceStore other) {
     DataSourceStore lubStore = new DataSourceStore();
